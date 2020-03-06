@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/material_key_line_quarter"
+    android:id="@+id/drama_item_row"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/material_keyline_half">
+
+        <ImageView
+            android:id="@+id/thumb"
+            android:layout_width="@dimen/material_keyline_huge"
+            android:layout_height="@dimen/material_keyline_huge"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/artwork" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/material_keyline_half"
+            android:layout_toRightOf="@+id/thumb"
+            android:orientation="vertical"
+            android:padding="@dimen/material_key_line_quarter">
+
+            <TextView
+                android:id="@+id/drama_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                tools:text="Firestone" />
+
+            <TextView
+                android:id="@+id/rating"
+                style="@style/TextAppearance.AppCompat.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/material_key_line_quarter"
+                tools:text="" />
+
+            <TextView
+                android:id="@+id/created_at"
+                style="@style/TextAppearance.AppCompat.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/material_key_line_quarter"
+                tools:text="" />
+
+        </LinearLayout>
+    </RelativeLayout>
+</LinearLayout>
