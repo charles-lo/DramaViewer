@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Drama Viewer</string>
+    <string name="artwork">artwork</string>
+    <string name="search">Search</string>
+    <string name="blur_background">blur_background</string>
+    <string name="playback_hint">click to show media controller</string>
+    <string name="pull_down_refresh">network error \n pull down to refresh data again..</string>
+</resources>

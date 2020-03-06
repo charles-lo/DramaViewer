@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drama_list_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/material_key_line_quarter">
+
+    <TextView
+        android:id="@+id/txtNoDrama"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_centerInParent="true"
+        android:drawablePadding="@dimen/material_key_line_quarter"
+        android:text="@string/pull_down_refresh"
+        android:textColor="@android:color/background_dark"
+        android:textSize="@dimen/text_xlarge" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.cooltechworks.views.shimmer.ShimmerRecyclerView
+            android:id="@+id/listDrama"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:demo_child_count="10"
+            app:demo_layout="@layout/demo_item"
+            app:demo_layout_manager_type="linear_vertical" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
+</RelativeLayout>
