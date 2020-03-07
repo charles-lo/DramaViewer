@@ -3,7 +3,12 @@ package com.charles.dramalist.views.dramalist;
 import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkRequest;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -20,7 +25,6 @@ import org.apache.commons.collections4.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.lifecycle.ViewModelProvider;
@@ -29,44 +33,44 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import es.dmoral.prefs.Prefs;
 
 import static org.apache.commons.collections4.CollectionUtils.filter;
 
 
 public class DramaListView extends AppCompatActivity {
+    static final String TAG = DramaListView.class.getSimpleName();
+    static final String KEYWORD = "keyword";
 
     Context context;
     RelativeLayout main;
     TextView txtNoDrama;
     ShimmerRecyclerView listDrama;
     SwipeRefreshLayout swipeRefreshLayout;
+    Snackbar snackBar;
+    SearchView searchView;
+    Menu menuView;
 
     private List<Datum> dataDrama = new ArrayList<>();
     private DramaAdapter adapter;
+    String keyWord;
 
     DramaViewModel viewModel;
 
-    @SuppressLint("RestrictedApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.drama_list);
 
         context = DramaListView.this;
-
+        keyWord = Prefs.with(this).read(KEYWORD);
         viewModel = new ViewModelProvider(this).get(DramaViewModel.class);
 
         main = findViewById(R.id.drama_list_main);
         txtNoDrama = findViewById(R.id.txtNoDrama);
         listDrama = findViewById(R.id.listDrama);
         swipeRefreshLayout = findViewById(R.id.swipe_container);
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.collapseActionView();
-            }
-            fetchData();
-        });
+        swipeRefreshLayout.setOnRefreshListener(this::fetchData);
         adapter = new DramaAdapter(context, dataDrama);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
         listDrama.setLayoutManager(mLayoutManager);
@@ -74,13 +78,77 @@ public class DramaListView extends AppCompatActivity {
         listDrama.setItemAnimator(new DefaultItemAnimator());
         listDrama.setAdapter(adapter);
 
-        fetchData();
+        viewModel.drama.observe(this, result -> {
+            if (result != null) {
+                txtNoDrama.setVisibility(View.GONE);
+                if (result.size() > 0) {
+                    displayDrama(result);
+                    if (searchView!=null && !TextUtils.isEmpty(keyWord)) {
+                        String word = keyWord;
+                        filterData(word);
+                        menuView.performIdentifierAction(R.id.action_search, 0);
+                        searchView.setQuery(word, true);
+                    }
+                } else {
+                    displayMessage("No drama found, Try again.", Snackbar.LENGTH_LONG);
+                    dataDrama.clear();
+                }
+            } else {
+                displayMessage("network error, check again.", Snackbar.LENGTH_INDEFINITE);
+                if (adapter.getItemCount() < 1) {
+                    txtNoDrama.setVisibility(View.VISIBLE);
+                    dataDrama.clear();
+                }
+            }
+            adapter.notifyDataSetChanged();
+        });
+        registerConnectivityMonitor();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter.getItemCount() < 1) {
+            fetchData();
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private void registerConnectivityMonitor() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkRequest.Builder builder = new NetworkRequest.Builder();
+            if (connectivityManager != null) {
+                connectivityManager.registerNetworkCallback(
+                        builder.build(),
+                        new ConnectivityManager.NetworkCallback() {
+                            @Override
+                            public void onAvailable(Network network) {
+                                runOnUiThread(() -> {
+                                    fetchData();
+                                    if (snackBar != null) {
+                                        snackBar.dismiss();
+                                    }
+                                });
+                            }
+
+                            public void onLost(Network network) {
+                                runOnUiThread(() -> {
+                                    displayMessage("network error, check again.", Snackbar.LENGTH_INDEFINITE);
+                                });
+                            }
+                        }
+                );
+            }
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        menuView = menu;
         getMenuInflater().inflate(R.menu.search, menu);
-        final SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
         SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
         if (searchManager != null) {
             searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
@@ -89,19 +157,24 @@ public class DramaListView extends AppCompatActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                filterData(query);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 filterData(newText);
+                keyWord = newText;
                 return false;
             }
         });
         return true;
     }
 
+    @Override
+    protected void onStop() {
+        Prefs.with(this).write(KEYWORD, keyWord);
+        super.onStop();
+    }
 
     private void filterData(String keyword) {
         Predicate<Datum> validPredicate = item -> {
@@ -120,29 +193,8 @@ public class DramaListView extends AppCompatActivity {
 
     public void fetchData() {
         swipeRefreshLayout.setRefreshing(false);
-
-        dataDrama.clear();
-        adapter.notifyDataSetChanged();
-
         setLoadingIndicator(true);
         viewModel.fetchDrama();
-
-        viewModel.drama.observe(this, result -> {
-            if (result != null) {
-                txtNoDrama.setVisibility(View.GONE);
-                if (result.size() > 0) {
-                    displayDrama(result);
-                } else {
-                    displayMessage("No video found, Try again.");
-                }
-            } else {
-                displayMessage("network error, check again.");
-                if (adapter.getItemCount() < 1) {
-                    txtNoDrama.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-
     }
 
     public void displayDrama(List<Datum> data) {
@@ -152,9 +204,10 @@ public class DramaListView extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
-    public void displayMessage(String message) {
+    public void displayMessage(String message, int duration) {
         setLoadingIndicator(false);
-        Snackbar.make(main, message, Snackbar.LENGTH_LONG).show();
+        snackBar = Snackbar.make(main, message, duration);
+        snackBar.show();
     }
 
     public void setLoadingIndicator(boolean isLoading) {

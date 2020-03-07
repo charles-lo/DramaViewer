@@ -5,11 +5,15 @@ import java.io.Serializable;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Datum implements Serializable {
+import io.objectbox.annotation.Entity;
+import io.objectbox.annotation.Id;
 
+@Entity
+public class Datum implements Serializable {
+    @Id(assignable = true)
     @SerializedName("drama_id")
     @Expose
-    private Integer dramaId;
+    private Long dramaId;
     @SerializedName("name")
     @Expose
     private String name;
@@ -27,11 +31,11 @@ public class Datum implements Serializable {
     private Double rating;
     private final static long serialVersionUID = -4523837389539476916L;
 
-    public Integer getDramaId() {
+    public Long getDramaId() {
         return dramaId;
     }
 
-    public void setDramaId(Integer dramaId) {
+    public void setDramaId(Long dramaId) {
         this.dramaId = dramaId;
     }
 

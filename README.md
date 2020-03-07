@@ -8,10 +8,11 @@ Clone the project and run to get started.
 
 ## Screenshots
 
-![](snaps/screenshots_banner.gif)
+<img src="https://github.com/charles-lo/DramaViewer/blob/dev/snaps/screenshots_banner.gif" width="360">
 
 ## Built With
 
+* [ObjectBox ](https://objectbox.io/mobile/) - ObjectBox is an embedded, object-oriented database for Mobile Apps and IoT.  NoSQL, ACID-compliant DB is 10x faster than any alternative and takes only 1/10th of the code compared to SQLite. 
 * [MVVM](https://developer.android.com/topic/libraries/architecture) - Use ViewModel and LiveData
 * [Commons Collections](http://commons.apache.org/proper/commons-collections/) - The Java Collections Framework was a major addition in JDK 1.2. It added many powerful data structures that accelerate development of most significant Java applications. Since that time it has become the recognised standard for collection handling in Java.
 * [RxJava](https://github.com/ReactiveX/RxJava) - RxJava is a Java VM implementation of Reactive Extensions: a library for composing asynchronous and event-based programs by using observable sequences.

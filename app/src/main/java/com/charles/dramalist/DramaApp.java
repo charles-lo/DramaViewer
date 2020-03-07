@@ -3,17 +3,18 @@ package com.charles.dramalist;
 import android.app.Application;
 
 import com.charles.dramalist.api.AppRepository;
-
+import com.charles.dramalist.data.BoxManager;
 
 public class DramaApp extends Application {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         init();
+        super.onCreate();
     }
 
     private void init() {
-        AppRepository.getInstance(this);
+        BoxManager.init(this);
+        AppRepository.getInstance();
     }
 }
