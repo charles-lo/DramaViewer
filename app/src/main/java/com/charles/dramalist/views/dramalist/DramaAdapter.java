@@ -72,13 +72,13 @@ public class DramaAdapter extends RecyclerView.Adapter<DramaAdapter.MyViewHolder
         final String artworkUrl = datum.getThumb();
         Glide.with(context).load(artworkUrl).placeholder(R.drawable.ic_logo).into(holder.imgThumb);
 
-        if(TextUtils.isEmpty(strHighLight)) {
+        if (TextUtils.isEmpty(strHighLight)) {
             holder.txtName.setText(datum.getName());
         } else {
-            holder.txtName.setText(Html.fromHtml(datum.getName().replaceAll(strHighLight, "<font color='red'>"+strHighLight+"</font>")));
+            holder.txtName.setText(Html.fromHtml(datum.getName().replaceAll(strHighLight, "<font color='red'>" + strHighLight + "</font>")));
         }
-        holder.txtRating.setText(String.format("rating : %s", datum.getRating()));
-        holder.txtCreated_at.setText(String.format("Created time : $ %s", String.valueOf(datum.getCreatedAt())));
+        holder.txtRating.setText(String.format(context.getString(R.string.rating), datum.getRating()));
+        holder.txtCreated_at.setText(String.format(context.getString(R.string.created_time), String.valueOf(datum.getCreatedAt())));
     }
 
     @Override

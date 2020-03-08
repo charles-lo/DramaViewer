@@ -8,7 +8,6 @@ import com.charles.dramalist.api.model.MyObjectBox;
 import io.objectbox.BoxStore;
 import io.objectbox.android.AndroidObjectBrowser;
 
-
 public class BoxManager {
 
     private static BoxManager boxManager;
@@ -24,10 +23,9 @@ public class BoxManager {
                 .androidContext(context.getApplicationContext())
                 .build();
         boxManager = new BoxManager(boxStore);
-
-        if (BuildConfig.DEBUG) {
-            new AndroidObjectBrowser(boxStore).start(context);
-        }
+//        if (BuildConfig.DEBUG) {
+//            new AndroidObjectBrowser(boxStore).start(context);
+//        }
     }
 
     public static BoxStore getStore() {

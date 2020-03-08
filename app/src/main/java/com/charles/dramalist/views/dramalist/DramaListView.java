@@ -1,29 +1,15 @@
 package com.charles.dramalist.views.dramalist;
 
-import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkRequest;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
-import com.charles.dramalist.R;
-import com.charles.dramalist.api.DramaViewModel;
-import com.charles.dramalist.api.model.Datum;
-import com.cooltechworks.views.shimmer.ShimmerRecyclerView;
-import com.google.android.material.snackbar.Snackbar;
-
-import org.apache.commons.collections4.Predicate;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -33,6 +19,19 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.charles.dramalist.R;
+import com.charles.dramalist.api.DramaViewModel;
+import com.charles.dramalist.api.model.Datum;
+import com.charles.dramalist.receiver.ConnectivityStatusReceiver;
+import com.cooltechworks.views.shimmer.ShimmerRecyclerView;
+import com.google.android.material.snackbar.Snackbar;
+
+import org.apache.commons.collections4.Predicate;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import es.dmoral.prefs.Prefs;
 
 import static org.apache.commons.collections4.CollectionUtils.filter;
@@ -55,16 +54,16 @@ public class DramaListView extends AppCompatActivity {
     private DramaAdapter adapter;
     String keyWord;
 
+    ConnectivityStatusReceiver connectivityStatusReceiver;
     DramaViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.drama_list);
-
+        viewModel = new ViewModelProvider(this).get(DramaViewModel.class);
         context = DramaListView.this;
         keyWord = Prefs.with(this).read(KEYWORD);
-        viewModel = new ViewModelProvider(this).get(DramaViewModel.class);
 
         main = findViewById(R.id.drama_list_main);
         txtNoDrama = findViewById(R.id.txtNoDrama);
@@ -78,30 +77,6 @@ public class DramaListView extends AppCompatActivity {
         listDrama.setItemAnimator(new DefaultItemAnimator());
         listDrama.setAdapter(adapter);
 
-        viewModel.drama.observe(this, result -> {
-            if (result != null) {
-                txtNoDrama.setVisibility(View.GONE);
-                if (result.size() > 0) {
-                    displayDrama(result);
-                    if (searchView!=null && !TextUtils.isEmpty(keyWord)) {
-                        String word = keyWord;
-                        filterData(word);
-                        menuView.performIdentifierAction(R.id.action_search, 0);
-                        searchView.setQuery(word, true);
-                    }
-                } else {
-                    displayMessage("No drama found, Try again.", Snackbar.LENGTH_LONG);
-                    dataDrama.clear();
-                }
-            } else {
-                displayMessage("network error, check again.", Snackbar.LENGTH_INDEFINITE);
-                if (adapter.getItemCount() < 1) {
-                    txtNoDrama.setVisibility(View.VISIBLE);
-                    dataDrama.clear();
-                }
-            }
-            adapter.notifyDataSetChanged();
-        });
         registerConnectivityMonitor();
     }
 
@@ -113,34 +88,18 @@ public class DramaListView extends AppCompatActivity {
         }
     }
 
-    @SuppressLint("NewApi")
-    private void registerConnectivityMonitor() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+    @Override
+    protected void onStop() {
+        Prefs.with(this).write(KEYWORD, keyWord);
+        super.onStop();
+    }
 
-            NetworkRequest.Builder builder = new NetworkRequest.Builder();
-            if (connectivityManager != null) {
-                connectivityManager.registerNetworkCallback(
-                        builder.build(),
-                        new ConnectivityManager.NetworkCallback() {
-                            @Override
-                            public void onAvailable(Network network) {
-                                runOnUiThread(() -> {
-                                    fetchData();
-                                    if (snackBar != null) {
-                                        snackBar.dismiss();
-                                    }
-                                });
-                            }
-
-                            public void onLost(Network network) {
-                                runOnUiThread(() -> {
-                                    displayMessage("network error, check again.", Snackbar.LENGTH_INDEFINITE);
-                                });
-                            }
-                        }
-                );
-            }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (connectivityStatusReceiver != null) {
+            // unregister receiver
+            unregisterReceiver(connectivityStatusReceiver);
         }
     }
 
@@ -153,7 +112,7 @@ public class DramaListView extends AppCompatActivity {
         if (searchManager != null) {
             searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         }
-        searchView.setQueryHint("Search for drama name");
+        searchView.setQueryHint(getString(R.string.search_drama_name));
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -167,13 +126,53 @@ public class DramaListView extends AppCompatActivity {
                 return false;
             }
         });
+        initViewMode();
         return true;
     }
 
-    @Override
-    protected void onStop() {
-        Prefs.with(this).write(KEYWORD, keyWord);
-        super.onStop();
+    private void initViewMode() {
+        viewModel.drama.observe(this, result -> {
+            if (result != null) {
+                txtNoDrama.setVisibility(View.GONE);
+                if (result.size() > 0) {
+                    displayDrama(result);
+                    if (searchView != null && !TextUtils.isEmpty(keyWord)) {
+                        String word = keyWord;
+                        filterData(word);
+                        menuView.performIdentifierAction(R.id.action_search, 0);
+                        searchView.setQuery(word, true);
+                    }
+                } else {
+                    displayMessage(getString(R.string.error_no_drama), Snackbar.LENGTH_LONG);
+                    dataDrama.clear();
+                }
+            } else {
+                displayMessage(getString(R.string.error_network), Snackbar.LENGTH_INDEFINITE);
+                if (adapter.getItemCount() < 1) {
+                    txtNoDrama.setVisibility(View.VISIBLE);
+                    dataDrama.clear();
+                }
+            }
+            adapter.notifyDataSetChanged();
+        });
+        viewModel.networkStatus.observe(this, result -> {
+            if (result != null) {
+                if (result) {
+                    fetchData();
+                    if (snackBar != null) {
+                        snackBar.dismiss();
+                    }
+                } else {
+                    displayMessage(getString(R.string.error_network), Snackbar.LENGTH_INDEFINITE);
+                }
+            }
+        });
+    }
+
+    private void registerConnectivityMonitor() {
+        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        connectivityStatusReceiver = new ConnectivityStatusReceiver();
+        registerReceiver(connectivityStatusReceiver, intentFilter);
     }
 
     private void filterData(String keyword) {
@@ -183,7 +182,7 @@ public class DramaListView extends AppCompatActivity {
         };
 
         if (viewModel.drama.getValue() != null) {
-            List<Datum> filterData = new ArrayList(viewModel.drama.getValue());
+            List<Datum> filterData = new ArrayList<>(viewModel.drama.getValue());
             filter(filterData, validPredicate);
             displayDrama(filterData);
         }

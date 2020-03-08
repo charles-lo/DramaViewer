@@ -1,0 +1,12 @@
+<resources>
+    <string name="search">搜尋</string>
+    <string name="pull_down_refresh">下拉更新資料 ! </string>
+    <string name="rating">評分 : %f</string>
+    <string name="created_time">出版日期 : %s</string>
+    <string name="total_view">觀看次數 : %d</string>
+    <string name="search_drama_name">搜尋戲劇名稱</string>
+
+    <string name="error_detail">無法取得戲劇資訊，請再試一次</string>
+    <string name="error_no_drama">"無法找到戲劇，請再試一次"</string>
+    <string name="error_network">"網路錯誤，請檢查後再試一次"</string>
+</resources>

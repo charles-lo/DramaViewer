@@ -7,12 +7,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.bumptech.glide.Glide;
 import com.charles.dramalist.R;
 import com.charles.dramalist.api.model.Datum;
 import com.google.android.material.snackbar.Snackbar;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 /**
  *
@@ -42,7 +42,7 @@ public class DramaDetailView extends AppCompatActivity {
         try {
             displayDrama((Datum) getIntent().getSerializableExtra("drama"));
         } catch (Exception e) {
-            displayMessage("Problem while getting drama info, Try again.");
+            displayMessage(getString(R.string.error_detail));
         }
     }
 
@@ -69,8 +69,8 @@ public class DramaDetailView extends AppCompatActivity {
         Glide.with(context).load(datum.getThumb()).placeholder(R.drawable.ic_logo).into(imgThumb);
 
         txtDramaName.setText(datum.getName());
-        txtRating.setText(String.format("rating : %s", datum.getRating()));
-        txtCreatedAt.setText(String.format("created time : %s", datum.getCreatedAt()));
-        txtTotalView.setText(String.format("total view : %s", datum.getTotalViews()));
+        txtRating.setText(String.format(getString(R.string.rating), datum.getRating()));
+        txtCreatedAt.setText(String.format(getString(R.string.created_time), datum.getCreatedAt()));
+        txtTotalView.setText(String.format(getString(R.string.total_view), datum.getTotalViews()));
     }
 }

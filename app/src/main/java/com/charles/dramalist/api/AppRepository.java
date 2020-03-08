@@ -1,18 +1,15 @@
 package com.charles.dramalist.api;
 
-import android.content.Context;
-import android.util.Log;
-
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-
 import com.charles.dramalist.api.model.Datum;
 import com.charles.dramalist.data.BoxManager;
 
 import java.util.List;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import io.objectbox.query.Query;
 import io.objectbox.rx.RxQuery;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
@@ -22,7 +19,10 @@ public class AppRepository {
 
     private CompositeDisposable disposables = new CompositeDisposable();
 
+    private Query<Datum> postBox = BoxManager.getStore().boxFor(Datum.class).query().build();
+
     private MutableLiveData<List<Datum>> drama = new MutableLiveData<>();
+    private MutableLiveData<Boolean> networkStatus = new MutableLiveData<>();
 
     private AppRepository() {
         // Prevent form the reflection api.
@@ -44,19 +44,28 @@ public class AppRepository {
         return drama;
     }
 
-    private Query<Datum> postBox = BoxManager.getStore().boxFor(Datum.class).query().build();
-
     void fetchDrama() {
         disposables.add(RxQuery.single(postBox)
-                .observeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(cache -> {
+                    drama.setValue(cache);
+                    return 0;
+                }).observeOn(Schedulers.io())
                 .flatMap(result -> {
-                    drama.postValue(result);
                     return ServiceFactory.getInstance().fetchDrama();
                 })
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         result -> drama.postValue(result.getData()),
-                        throwable -> drama.postValue(null)
+                        throwable -> networkStatus.postValue(false)
                 ));
+    }
+
+    LiveData<Boolean> getNetworkStatus() {
+        return networkStatus;
+    }
+
+    void setNetworkStatus(Boolean status) {
+        networkStatus.postValue(status);
     }
 }
