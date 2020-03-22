@@ -2,6 +2,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.objectbox'
 
 android {
+    viewBinding {
+        enabled = true
+    }
     compileSdkVersion 29
     defaultConfig {
         applicationId "com.charles.dramaviewer"

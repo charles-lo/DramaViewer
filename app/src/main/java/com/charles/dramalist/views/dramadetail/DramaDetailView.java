@@ -3,15 +3,13 @@ package com.charles.dramalist.views.dramadetail;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.charles.dramalist.R;
 import com.charles.dramalist.api.model.Datum;
+import com.charles.dramalist.databinding.DramaDetailBinding;
 import com.google.android.material.snackbar.Snackbar;
 
 /**
@@ -21,23 +19,15 @@ import com.google.android.material.snackbar.Snackbar;
 public class DramaDetailView extends AppCompatActivity {
 
     Context context;
-    LinearLayout main;
-    ImageView imgThumb;
-    TextView txtDramaName, txtRating, txtCreatedAt, txtTotalView;
+    DramaDetailBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.drama_detail);
+        binding = DramaDetailBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         context = DramaDetailView.this;
-
-        main = findViewById(R.id.drama_detail_main);
-        imgThumb = findViewById(R.id.imgThumbDetail);
-        txtDramaName = findViewById(R.id.name_detail);
-        txtRating = findViewById(R.id.rating_detail);
-        txtCreatedAt = findViewById(R.id.created_at_detail);
-        txtTotalView = findViewById(R.id.total_views);
 
         try {
             displayDrama((Datum) getIntent().getSerializableExtra("drama"));
@@ -58,7 +48,7 @@ public class DramaDetailView extends AppCompatActivity {
     }
 
     public void displayMessage(String message) {
-        Snackbar.make(main, message, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(binding.dramaDetailMain, message, Snackbar.LENGTH_LONG).show();
     }
 
     public void displayDrama(Datum datum) {
@@ -66,11 +56,11 @@ public class DramaDetailView extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle(datum.getName());
         }
-        Glide.with(context).load(datum.getThumb()).placeholder(R.drawable.ic_logo).into(imgThumb);
+        Glide.with(context).load(datum.getThumb()).placeholder(R.drawable.ic_logo).into(binding.imgThumbDetail);
 
-        txtDramaName.setText(datum.getName());
-        txtRating.setText(String.format(getString(R.string.rating), datum.getRating()));
-        txtCreatedAt.setText(String.format(getString(R.string.created_time), datum.getCreatedAt()));
-        txtTotalView.setText(String.format(getString(R.string.total_view), datum.getTotalViews()));
+        binding.nameDetail.setText(datum.getName());
+        binding.ratingDetail.setText(String.format(getString(R.string.rating), datum.getRating()));
+        binding.createdAtDetail.setText(String.format(getString(R.string.created_time), datum.getCreatedAt()));
+        binding.totalViews.setText(String.format(getString(R.string.total_view), datum.getTotalViews()));
     }
 }

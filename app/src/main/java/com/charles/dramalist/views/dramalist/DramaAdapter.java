@@ -2,22 +2,18 @@ package com.charles.dramalist.views.dramalist;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.Html;
+import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.text.Html;
-import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
 import com.bumptech.glide.Glide;
 import com.charles.dramalist.R;
 import com.charles.dramalist.api.model.Datum;
+import com.charles.dramalist.databinding.DramaItemBinding;
 import com.charles.dramalist.views.dramadetail.DramaDetailView;
 
 import java.util.List;
@@ -33,19 +29,12 @@ public class DramaAdapter extends RecyclerView.Adapter<DramaAdapter.MyViewHolder
     private String strHighLight;
 
     class MyViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout row;
-        ImageView imgThumb;
-        TextView txtName, txtRating, txtCreated_at;
+        DramaItemBinding myBinding;
 
-
-        MyViewHolder(View view) {
-            super(view);
-            row = view.findViewById(R.id.drama_item_row);
-            imgThumb = view.findViewById(R.id.thumb);
-            txtName = view.findViewById(R.id.drama_name);
-            txtRating = view.findViewById(R.id.rating);
-            txtCreated_at = view.findViewById(R.id.created_at);
-            row.setOnClickListener(view1 -> {
+        MyViewHolder(DramaItemBinding binding) {
+            super(binding.getRoot());
+            myBinding = binding;
+            binding.dramaItemRow.setOnClickListener(view1 -> {
                 Intent detail = new Intent(context, DramaDetailView.class);
                 detail.putExtra("drama", datumList.get(getAdapterPosition()));
                 context.startActivity(detail);
@@ -61,8 +50,7 @@ public class DramaAdapter extends RecyclerView.Adapter<DramaAdapter.MyViewHolder
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.drama_item, parent, false);
-        return new MyViewHolder(itemView);
+        return new MyViewHolder(DramaItemBinding.inflate(LayoutInflater.from(parent.getContext())));
     }
 
     @Override
@@ -70,15 +58,15 @@ public class DramaAdapter extends RecyclerView.Adapter<DramaAdapter.MyViewHolder
         Datum datum = datumList.get(position);
 
         final String artworkUrl = datum.getThumb();
-        Glide.with(context).load(artworkUrl).placeholder(R.drawable.ic_logo).into(holder.imgThumb);
+        Glide.with(context).load(artworkUrl).placeholder(R.drawable.ic_logo).into(holder.myBinding.thumb);
 
         if (TextUtils.isEmpty(strHighLight)) {
-            holder.txtName.setText(datum.getName());
+            holder.myBinding.dramaName.setText(datum.getName());
         } else {
-            holder.txtName.setText(Html.fromHtml(datum.getName().replaceAll(strHighLight, "<font color='red'>" + strHighLight + "</font>")));
+            holder.myBinding.dramaName.setText(Html.fromHtml(datum.getName().replaceAll(strHighLight, "<font color='red'>" + strHighLight + "</font>")));
         }
-        holder.txtRating.setText(String.format(context.getString(R.string.rating), datum.getRating()));
-        holder.txtCreated_at.setText(String.format(context.getString(R.string.created_time), String.valueOf(datum.getCreatedAt())));
+        holder.myBinding.rating.setText(String.format(context.getString(R.string.rating), datum.getRating()));
+        holder.myBinding.createdAt.setText(String.format(context.getString(R.string.created_time), String.valueOf(datum.getCreatedAt())));
     }
 
     @Override

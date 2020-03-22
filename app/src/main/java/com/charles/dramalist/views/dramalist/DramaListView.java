@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -18,13 +16,12 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.charles.dramalist.R;
 import com.charles.dramalist.api.DramaViewModel;
 import com.charles.dramalist.api.model.Datum;
+import com.charles.dramalist.databinding.DramaListBinding;
 import com.charles.dramalist.receiver.ConnectivityStatusReceiver;
-import com.cooltechworks.views.shimmer.ShimmerRecyclerView;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.apache.commons.collections4.Predicate;
@@ -42,10 +39,6 @@ public class DramaListView extends AppCompatActivity {
     static final String KEYWORD = "keyword";
 
     Context context;
-    RelativeLayout main;
-    TextView txtNoDrama;
-    ShimmerRecyclerView listDrama;
-    SwipeRefreshLayout swipeRefreshLayout;
     Snackbar snackBar;
     SearchView searchView;
     Menu menuView;
@@ -56,26 +49,25 @@ public class DramaListView extends AppCompatActivity {
 
     ConnectivityStatusReceiver connectivityStatusReceiver;
     DramaViewModel viewModel;
+    DramaListBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.drama_list);
+        binding = DramaListBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
         viewModel = new ViewModelProvider(this).get(DramaViewModel.class);
         context = DramaListView.this;
         keyWord = Prefs.with(this).read(KEYWORD);
 
-        main = findViewById(R.id.drama_list_main);
-        txtNoDrama = findViewById(R.id.txtNoDrama);
-        listDrama = findViewById(R.id.listDrama);
-        swipeRefreshLayout = findViewById(R.id.swipe_container);
-        swipeRefreshLayout.setOnRefreshListener(this::fetchData);
+        binding.swipeContainer.setOnRefreshListener(this::fetchData);
         adapter = new DramaAdapter(context, dataDrama);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
-        listDrama.setLayoutManager(mLayoutManager);
-        listDrama.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
-        listDrama.setItemAnimator(new DefaultItemAnimator());
-        listDrama.setAdapter(adapter);
+        binding.listDrama.setLayoutManager(mLayoutManager);
+        binding.listDrama.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
+        binding.listDrama.setItemAnimator(new DefaultItemAnimator());
+        binding.listDrama.setAdapter(adapter);
 
         registerConnectivityMonitor();
     }
@@ -133,7 +125,7 @@ public class DramaListView extends AppCompatActivity {
     private void initViewMode() {
         viewModel.drama.observe(this, result -> {
             if (result != null) {
-                txtNoDrama.setVisibility(View.GONE);
+                binding.txtNoDrama.setVisibility(View.GONE);
                 if (result.size() > 0) {
                     displayDrama(result);
                     if (searchView != null && !TextUtils.isEmpty(keyWord)) {
@@ -149,7 +141,7 @@ public class DramaListView extends AppCompatActivity {
             } else {
                 displayMessage(getString(R.string.error_network), Snackbar.LENGTH_INDEFINITE);
                 if (adapter.getItemCount() < 1) {
-                    txtNoDrama.setVisibility(View.VISIBLE);
+                    binding.txtNoDrama.setVisibility(View.VISIBLE);
                     dataDrama.clear();
                 }
             }
@@ -191,7 +183,7 @@ public class DramaListView extends AppCompatActivity {
     }
 
     public void fetchData() {
-        swipeRefreshLayout.setRefreshing(false);
+        binding.swipeContainer.setRefreshing(false);
         setLoadingIndicator(true);
         viewModel.fetchDrama();
     }
@@ -205,15 +197,15 @@ public class DramaListView extends AppCompatActivity {
 
     public void displayMessage(String message, int duration) {
         setLoadingIndicator(false);
-        snackBar = Snackbar.make(main, message, duration);
+        snackBar = Snackbar.make(binding.dramaListMain, message, duration);
         snackBar.show();
     }
 
     public void setLoadingIndicator(boolean isLoading) {
         if (isLoading) {
-            listDrama.showShimmerAdapter();
+            binding.listDrama.showShimmerAdapter();
         } else {
-            listDrama.hideShimmerAdapter();
+            binding.listDrama.hideShimmerAdapter();
         }
     }
 }
